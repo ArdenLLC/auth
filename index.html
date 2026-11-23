@@ -1,4 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<script>window.SB_KEY="PASTE_KEY"</script>
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>效率云</title>
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f2f4f7;color:#1f2937;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;padding:20px}
 .box{background:#fff;border-radius:20px;padding:32px 22px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.08);text-align:center;box-sizing:border-box}
@@ -12,15 +13,20 @@ button{width:100%;padding:15px;margin-top:14px;font-size:16px;font-weight:600;co
 <div id="c" hidden><h1>设置新密码</h1><p>至少 8 位，需含字母和数字。</p>
 <input id="p1" type="password" placeholder="新密码"><input id="p2" type="password" placeholder="确认新密码">
 <button id="go">保存新密码</button><div class="m" id="m"></div></div>
-<div id="d" hidden><div style="font-size:40px">⚠️</div><h1>链接已失效</h1><p>可能已使用过或已过期（24 小时）。</p><p class="t">请回 App 重新发起。</p></div>
+<div id="d" hidden><div style="font-size:40px">⚠️</div><h1 id="dt">链接已失效</h1><p id="dp">可能已使用过或已过期（24 小时）。</p><p class="t">请回 App 重新发起。</p></div>
 </div>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-const K="PASTE_KEY";
+const K=(window.SB_KEY||'').trim();
 const q=i=>document.getElementById(i),sh=i=>['a','b','c','d'].forEach(k=>q(k).hidden=k!==i);
 let ref='';
 try{let s=K.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';ref=JSON.parse(atob(s)).ref||''}catch(e){}
-if(!ref){sh('d');throw new Error('bad key')}
+if(!ref||K==='PASTE_KEY'){
+  q('dt').textContent='页面还没配置好';
+  q('dp').textContent='请把这个页面里的 PASTE_KEY 换成自己的 Supabase anon key。';
+  sh('d');
+  throw new Error('no key');
+}
 const sb=createClient('https://'+ref+'.supabase.co',K,{auth:{detectSessionInUrl:true,flowType:'implicit'}});
 const h=new URLSearchParams(location.hash.slice(1)),s2=new URLSearchParams(location.search);
 const t=h.get('type')||s2.get('type')||'';
