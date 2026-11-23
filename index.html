@@ -1,0 +1,38 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>效率云</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f2f4f7;color:#1f2937;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;padding:20px}
+.box{background:#fff;border-radius:20px;padding:32px 22px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.08);text-align:center;box-sizing:border-box}
+h1{font-size:20px;margin:14px 0 10px}p{font-size:15px;line-height:1.7;color:#4b5563;margin:0 0 6px}
+.t{font-size:13px;color:#9ca3af;margin-top:16px}
+input{width:100%;padding:14px;margin-top:10px;font-size:16px;border:1px solid #d8dee7;border-radius:12px;box-sizing:border-box}
+button{width:100%;padding:15px;margin-top:14px;font-size:16px;font-weight:600;color:#fff;background:#1b2540;border:0;border-radius:12px}
+.m{font-size:14px;margin-top:12px;min-height:20px}.e{color:#dc2626}.o{color:#059669}</style></head><body><div class="box">
+<div id="a"><p>正在验证…</p></div>
+<div id="b" hidden><div style="font-size:40px">✅</div><h1>邮箱已验证</h1><p>请回到「效率云」App，用刚才的邮箱和密码登录。</p><p class="t">没自动跳回就手动切回 App。</p></div>
+<div id="c" hidden><h1>设置新密码</h1><p>至少 8 位，需含字母和数字。</p>
+<input id="p1" type="password" placeholder="新密码"><input id="p2" type="password" placeholder="确认新密码">
+<button id="go">保存新密码</button><div class="m" id="m"></div></div>
+<div id="d" hidden><div style="font-size:40px">⚠️</div><h1>链接已失效</h1><p>可能已使用过或已过期（24 小时）。</p><p class="t">请回 App 重新发起。</p></div>
+</div>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const K="PASTE_KEY";
+const q=i=>document.getElementById(i),sh=i=>['a','b','c','d'].forEach(k=>q(k).hidden=k!==i);
+let ref='';
+try{let s=K.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';ref=JSON.parse(atob(s)).ref||''}catch(e){}
+if(!ref){sh('d');throw new Error('bad key')}
+const sb=createClient('https://'+ref+'.supabase.co',K,{auth:{detectSessionInUrl:true,flowType:'implicit'}});
+const h=new URLSearchParams(location.hash.slice(1)),s2=new URLSearchParams(location.search);
+const t=h.get('type')||s2.get('type')||'';
+(async()=>{
+if(h.get('error_description')||s2.get('error_description'))return sh('d');
+const{data}=await sb.auth.getSession();const se=data&&data.session;
+if(t==='recovery'){if(!se)return sh('d');sh('c');
+q('go').onclick=async()=>{const p1=q('p1').value,p2=q('p2').value;
+if(p1.length<8||!/[A-Za-z]/.test(p1)||!/\d/.test(p1)){q('m').className='m e';q('m').textContent='至少 8 位，需含字母和数字。';return}
+if(p1!==p2){q('m').className='m e';q('m').textContent='两次输入不一致。';return}
+q('go').disabled=true;const{error}=await sb.auth.updateUser({password:p1});q('go').disabled=false;
+if(error){q('m').className='m e';q('m').textContent='保存失败：'+error.message;return}
+await sb.auth.signOut();q('m').className='m o';q('m').textContent='密码已更新，请回 App 用新密码登录。';q('p1').value='';q('p2').value=''};return}
+sh(se?'b':'d')})();
+</script></body></html>
